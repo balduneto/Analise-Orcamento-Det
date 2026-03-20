@@ -6,7 +6,7 @@ import {
 import { 
   UploadCloud, TrendingUp, TrendingDown, DollarSign, Briefcase, 
   MapPin, Users, Target, Activity, AlertTriangle, FileText, BarChart2,
-  BookOpen, Info, Filter, Layers, Building2
+  BookOpen, Info, Filter, Layers, Building2, Wallet, Lightbulb, TrendingUp as TrendingUpIcon, AlertCircle
 } from 'lucide-react';
 
 // --- UTILIDADES DE PARSING E FORMATAÇÃO ---
@@ -14,6 +14,15 @@ const parseNumber = (str) => {
   if (typeof str === 'number') return str;
   if (!str) return 0;
   const cleanStr = str.replace(/\./g, '').replace(',', '.');
+  const val = parseFloat(cleanStr);
+  return isNaN(val) ? 0 : val;
+};
+
+const parseBRLCurrency = (str) => {
+  if (typeof str === 'number') return str;
+  if (!str) return 0;
+  let cleanStr = str.replace(/[R$\s]/g, ''); // Remove R$ e espaços
+  cleanStr = cleanStr.replace(/\./g, '').replace(',', '.'); // Ajusta milhares e decimais
   const val = parseFloat(cleanStr);
   return isNaN(val) ? 0 : val;
 };
@@ -33,20 +42,20 @@ const formatCompact = (value) => {
 
 // Mapa de cores fixas para as Áreas de Atuação
 const AREA_COLORS = {
-  'STI': '#3B82F6',                   // Azul
-  'Educação Profissional': '#F97316', // Laranja
-  'Educação Básica': '#10B981',       // Verde
-  'Saúde Segurança': '#8B5CF6',       // Roxo
-  'Saúde e Segurança': '#8B5CF6',     // Roxo
+  'STI': '#3B82F6',
+  'Educação Profissional': '#F97316',
+  'Educação Básica': '#10B981',
+  'Saúde Segurança': '#8B5CF6',
+  'Saúde e Segurança': '#8B5CF6',
   'Inovação e Tecnologia': '#6366F1',
   'Mercado': '#EC4899',
   'Sesi Indústria': '#0ea5e9',
   'Sesi Saúde': '#14b8a6'
 };
 
-const COLORS = ['#0F172A', '#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6'];
+const COLORS = ['#0F172A', '#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6', '#f43f5e', '#84cc16'];
 
-// --- DADOS DE FALLBACK ---
+// --- DADOS DE FALLBACK (Orçamento) ---
 const fallbackData = [
   { unidade: 'Canaã', area: 'STI', entidade: 'SENAI', diretor: 'Aliana', receitas: 3844196, despesas: 2707005, ro2026: 1137191, roRealizado: -126316 },
   { unidade: 'Canaã', area: 'Educação Profissional', entidade: 'SENAI', diretor: 'Aliana', receitas: 2500000, despesas: 1800000, ro2026: 700000, roRealizado: 150000 },
@@ -58,69 +67,65 @@ const fallbackData = [
   { unidade: 'Colorado', area: 'Saúde Segurança', entidade: 'SESI', diretor: 'Marcelo Melo', receitas: 25000, despesas: 15000, ro2026: 10000, roRealizado: 0 },
   { unidade: 'Goianésia', area: 'Saúde Segurança', entidade: 'SESI', diretor: 'Thiago Ferri', receitas: 332000, despesas: 332330, ro2026: -330, roRealizado: -12375 },
   { unidade: 'Itumbiara', area: 'Saúde Segurança', entidade: 'SESI', diretor: 'Abílio', receitas: 4438500, despesas: 3393200, ro2026: 1045300, roRealizado: 216648 },
-  { unidade: 'Itumbiara', area: 'Educação Básica', entidade: 'SESI', diretor: 'Abílio', receitas: 1200000, despesas: 1100000, ro2026: 100000, roRealizado: 30000 },
   { unidade: 'Jaiara', area: 'Saúde Segurança', entidade: 'SESI', diretor: 'Nara', receitas: 2021830, despesas: 1471958, ro2026: 549872, roRealizado: 51391 },
-  { unidade: 'Jataí', area: 'Saúde Segurança', entidade: 'SESI', diretor: 'Albino', receitas: 795304, despesas: 580582, ro2026: 214722, roRealizado: -9194 },
   { unidade: 'Minaçu', area: 'Saúde Segurança', entidade: 'SESI', diretor: 'Alexandre', receitas: 4479658, despesas: 2699817, ro2026: 1779841, roRealizado: 50000 }
+];
+
+// --- DADOS DE FALLBACK (Investimentos) ---
+const fallbackInvData = [
+  { ano: '2021', entidade: 'SESI', unidade: 'Jaiara', diretor: 'Nara', conta: 'EQUIPAMENTOS DE INFORMATICA', realizado: 18310 },
+  { ano: '2021', entidade: 'SESI', unidade: 'Goianésia', diretor: 'Thiago Ferri', conta: 'MAQUINAS E EQUIPAMENTOS EM GERAL', realizado: 45000 },
+  { ano: '2022', entidade: 'SENAI', unidade: 'Fatesg', diretor: 'Matuzinhos', conta: 'EQUIPAMENTOS DE INFORMATICA', realizado: 125000 },
+  { ano: '2023', entidade: 'SENAI', unidade: 'IST Automação', diretor: 'Joel', conta: 'MAQUINAS E EQUIPAMENTOS EM GERAL', realizado: 450000 },
+  { ano: '2024', entidade: 'SESI', unidade: 'Itumbiara', diretor: 'Abílio', conta: 'CONSTRUCOES EM ANDAMENTO', realizado: 850000 },
+  { ano: '2025', entidade: 'SENAI', unidade: 'Canaã', diretor: 'Aliana', conta: 'CONSTRUCOES EM ANDAMENTO', realizado: 1200500 },
+  { ano: '2025', entidade: 'SENAI', unidade: 'IST Alimentos', diretor: 'Fernanda', conta: 'MOBILIARIO EM GERAL', realizado: 320000 }
 ];
 
 export default function StrategicDashboard() {
   
-  // --- INJEÇÃO DE ESTILOS PARA GITHUB PAGES / AMBIENTES SEM BUILD ---
+  // --- INJEÇÃO DE ESTILOS (GitHub Pages / Ambientes sem build) ---
   useEffect(() => {
-    // Esta injeção garante que o Tailwind CSS e os Gráficos funcionem
-    // perfeitamente em plataformas como GitHub Pages.
     const injectTailwind = () => {
       if (document.getElementById('tailwind-cdn-script')) return;
       const script = document.createElement('script');
       script.id = 'tailwind-cdn-script';
       script.src = "https://cdn.tailwindcss.com";
       script.onload = () => {
-        // Força o navegador e o Recharts a recalcular as dimensões das telas
-        // após o estilo visual ser totalmente carregado no ambiente de hospedagem
-        setTimeout(() => {
-          window.dispatchEvent(new Event('resize'));
-        }, 150);
+        setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 150);
       };
       document.head.appendChild(script);
     };
-
-    if (typeof window !== 'undefined' && !window.tailwind) {
-      injectTailwind();
-    }
+    if (typeof window !== 'undefined' && !window.tailwind) injectTailwind();
   }, []);
 
+  // --- ESTADOS DO DASHBOARD ---
   const [data, setData] = useState(fallbackData);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [invData, setInvData] = useState(fallbackInvData);
+  const [isDataLoaded, setIsDataLoaded] = useState({ orcamento: false, investimentos: false });
   const [error, setError] = useState('');
+  
   const [selectedDiretor, setSelectedDiretor] = useState('Todos');
   const [selectedArea, setSelectedArea] = useState('Todos');
   const [selectedEntidade, setSelectedEntidade] = useState('Todos');
   const [selectedUnidade, setSelectedUnidade] = useState('Todos');
-  const fileInputRef = useRef(null);
+  
+  const fileOrcamentoRef = useRef(null);
+  const fileInvRef = useRef(null);
 
-  // --- PROCESSAMENTO DO FICHEIRO CSV ---
-  const handleFileUpload = (event) => {
+  // --- PROCESSAMENTO: ORÇAMENTO ---
+  const handleOrcamentoUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const text = e.target.result;
         const lines = text.trim().split('\n');
-        if (lines.length < 2) throw new Error("O arquivo CSV parece estar vazio ou inválido.");
-
+        if (lines.length < 2) throw new Error("CSV vazio ou inválido.");
         const headers = lines[0].split(';').map(h => h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+        const getCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
         
-        const getCol = (keywords) => {
-          for (let key of keywords) {
-            const idx = headers.findIndex(h => h.includes(key));
-            if (idx !== -1) return idx;
-          }
-          return -1;
-        };
-
         const idxUnidade = getCol(['unidade']);
         const idxArea = getCol(['area']);
         const idxEntidade = getCol(['entidade']);
@@ -146,21 +151,55 @@ export default function StrategicDashboard() {
         }).filter(Boolean);
 
         setData(parsedData);
-        setIsDataLoaded(true);
-        setSelectedDiretor('Todos');
-        setSelectedArea('Todos');
-        setSelectedEntidade('Todos');
-        setSelectedUnidade('Todos');
+        setIsDataLoaded(prev => ({...prev, orcamento: true}));
         setError('');
-      } catch (err) {
-        setError('Erro ao processar o ficheiro. Verifique se é um CSV separado por ponto e vírgula (;).');
-        console.error(err);
-      }
+      } catch (err) { setError('Erro ao processar Orçamento. Verifique o CSV.'); }
     };
     reader.readAsText(file);
   };
 
-  // --- FILTROS E AGRUPAMENTOS ---
+  // --- PROCESSAMENTO: INVESTIMENTOS ---
+  const handleInvUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const lines = text.trim().split('\n');
+        if (lines.length < 2) throw new Error("CSV vazio ou inválido.");
+        const headers = lines[0].split(';').map(h => h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+        const getCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
+        
+        const idxAno = getCol(['ano']);
+        const idxEntidade = getCol(['entidade']);
+        const idxUnidade = getCol(['unidade']);
+        const idxDiretor = getCol(['diretor']);
+        const idxConta = getCol(['conta']);
+        const idxRealizado = getCol(['realizado']);
+
+        const parsedData = lines.slice(1).map((line, index) => {
+          const values = line.split(';');
+          if (values.length < 5) return null;
+          return {
+            ano: idxAno !== -1 && values[idxAno] ? values[idxAno].trim() : 'N/D',
+            entidade: idxEntidade !== -1 && values[idxEntidade] ? values[idxEntidade].trim() : 'N/D',
+            unidade: idxUnidade !== -1 && values[idxUnidade] ? values[idxUnidade].trim() : 'N/D',
+            diretor: idxDiretor !== -1 && values[idxDiretor] ? values[idxDiretor].trim() : 'N/D',
+            conta: idxConta !== -1 && values[idxConta] ? values[idxConta].trim() : 'N/D',
+            realizado: idxRealizado !== -1 ? parseBRLCurrency(values[idxRealizado]) : 0,
+          };
+        }).filter(Boolean);
+
+        setInvData(parsedData);
+        setIsDataLoaded(prev => ({...prev, investimentos: true}));
+        setError('');
+      } catch (err) { setError('Erro ao processar Investimentos. Verifique o CSV.'); }
+    };
+    reader.readAsText(file);
+  };
+
+  // --- FILTROS CRUZADOS (ORÇAMENTO) ---
   const getUniqueOptions = (key) => {
     const options = new Set(data.map(d => d[key]).filter(v => v && v !== 'N/D' && !v.toString().startsWith('Linha')));
     return ['Todos', ...Array.from(options).sort()];
@@ -181,6 +220,19 @@ export default function StrategicDashboard() {
     });
   }, [data, selectedDiretor, selectedArea, selectedEntidade, selectedUnidade]);
 
+  // --- FILTROS CRUZADOS (INVESTIMENTOS) ---
+  const unidadesComAreaFiltrada = useMemo(() => new Set(filteredData.map(d => d.unidade)), [filteredData]);
+  
+  const filteredInvData = useMemo(() => {
+    return invData.filter(d => {
+      const matchDiretor = selectedDiretor === 'Todos' || d.diretor === selectedDiretor;
+      const matchEntidade = selectedEntidade === 'Todos' || d.entidade === selectedEntidade;
+      const matchUnidade = selectedUnidade === 'Todos' || d.unidade === selectedUnidade;
+      const matchArea = selectedArea === 'Todos' || unidadesComAreaFiltrada.has(d.unidade);
+      return matchDiretor && matchEntidade && matchUnidade && matchArea;
+    });
+  }, [invData, selectedDiretor, selectedEntidade, selectedUnidade, selectedArea, unidadesComAreaFiltrada]);
+
   const hasFilters = selectedDiretor !== 'Todos' || selectedArea !== 'Todos' || selectedEntidade !== 'Todos' || selectedUnidade !== 'Todos';
 
   const resetFilters = () => {
@@ -190,168 +242,172 @@ export default function StrategicDashboard() {
     setSelectedUnidade('Todos');
   };
 
-  // --- MOTOR DE AGREGAÇÃO E CÁLCULOS ESTRATÉGICOS ---
+  // --- CÁLCULOS GERAIS E AGREGAÇÕES ---
   const kpis = useMemo(() => {
     let rec = 0, desp = 0, ro = 0, roReal = 0;
     const unids = new Set();
     filteredData.forEach(d => {
-      rec += d.receitas;
-      desp += d.despesas;
-      ro += d.ro2026;
-      roReal += d.roRealizado;
+      rec += d.receitas; desp += d.despesas; ro += d.ro2026; roReal += d.roRealizado;
       if(d.unidade && d.unidade !== 'N/D') unids.add(d.unidade);
     });
+    let invTotal = 0;
+    filteredInvData.forEach(d => invTotal += d.realizado);
     const margem = rec > 0 ? (ro / rec) : 0;
     const metaBimestre = ro / 6;
     const atingimentoBimestre = metaBimestre > 0 ? roReal / metaBimestre : (roReal > 0 ? 1 : 0);
-    
-    return { rec, desp, ro, roReal, margem, unidadesUnicas: unids.size, metaBimestre, atingimentoBimestre };
-  }, [filteredData]);
+    return { rec, desp, ro, roReal, margem, unidadesUnicas: unids.size, metaBimestre, atingimentoBimestre, invTotal };
+  }, [filteredData, filteredInvData]);
 
   const aggregateBy = (key, dataArray) => {
     const result = {};
     dataArray.forEach(item => {
       const val = item[key] || 'N/D';
-      if (!result[val]) {
-        result[val] = { name: val, receitas: 0, despesas: 0, ro2026: 0, roRealizado: 0, metaJanFev: 0 };
-      }
+      if (!result[val]) result[val] = { name: val, receitas: 0, despesas: 0, ro2026: 0, roRealizado: 0, metaJanFev: 0 };
       result[val].receitas += item.receitas;
       result[val].despesas += item.despesas;
       result[val].ro2026 += item.ro2026;
       result[val].roRealizado += item.roRealizado;
       result[val].metaJanFev += (item.ro2026 / 6);
     });
-    return Object.values(result)
-      .filter(item => item.name !== 'N/D' && item.name !== '' && !item.name.toString().startsWith('Linha'))
-      .sort((a, b) => b.ro2026 - a.ro2026);
+    return Object.values(result).filter(i => i.name !== 'N/D' && i.name !== '').sort((a, b) => b.ro2026 - a.ro2026);
   };
 
   const dataArea = useMemo(() => aggregateBy('area', filteredData), [filteredData]);
   const dataDiretor = useMemo(() => aggregateBy('diretor', data), [data]); 
   const dataUnidade = useMemo(() => aggregateBy('unidade', filteredData), [filteredData]); 
 
-  // --- MATRIZ DE RECEITAS E DESPESAS POR UNIDADE E ÁREA (STACKED) ---
+  // --- CÁLCULOS DE INVESTIMENTOS ---
+  const aggregateInvBy = (key) => {
+    const result = {};
+    filteredInvData.forEach(item => {
+      const val = item[key] || 'N/D';
+      if (!result[val]) result[val] = { name: val, realizado: 0 };
+      result[val].realizado += item.realizado;
+    });
+    return Object.values(result).filter(i => i.name !== 'N/D').sort((a, b) => b.realizado - a.realizado);
+  };
+
+  const invByAno = useMemo(() => aggregateInvBy('ano').sort((a,b) => a.name.localeCompare(b.name)), [filteredInvData]);
+  const invByConta = useMemo(() => aggregateInvBy('conta'), [filteredInvData]);
+  const invByDiretor = useMemo(() => aggregateInvBy('diretor'), [filteredInvData]);
+
+  // --- MATRIZES E RANKINGS CRUZADOS ---
   const dataMatriz = useMemo(() => {
     const result = {};
     filteredData.forEach(item => {
-      const uni = item.unidade || 'N/D';
-      const area = item.area || 'N/D';
+      const uni = item.unidade || 'N/D'; const area = item.area || 'N/D';
       if (uni === 'N/D' || uni === '' || uni.toString().startsWith('Linha')) return;
-
-      if (!result[uni]) {
-        result[uni] = { name: uni, totalReceitas: 0, totalDespesas: 0, recProps: {}, despProps: {} };
-      }
-      
-      result[uni].totalReceitas += item.receitas;
-      result[uni].totalDespesas += item.despesas;
-      
+      if (!result[uni]) result[uni] = { name: uni, totalReceitas: 0, totalDespesas: 0, recProps: {}, despProps: {} };
+      result[uni].totalReceitas += item.receitas; result[uni].totalDespesas += item.despesas;
       if (!result[uni].recProps[area]) result[uni].recProps[area] = 0;
       if (!result[uni].despProps[area]) result[uni].despProps[area] = 0;
-      
-      result[uni].recProps[area] += item.receitas;
-      result[uni].despProps[area] += item.despesas;
+      result[uni].recProps[area] += item.receitas; result[uni].despProps[area] += item.despesas;
     });
-
-    const receitasArr = [];
-    const despesasArr = [];
-
-    // Ordenamos ambas as listas pelo volume total de Receitas
-    Object.values(result)
-      .sort((a, b) => b.totalReceitas - a.totalReceitas)
-      .forEach(item => {
+    const receitasArr = []; const despesasArr = [];
+    Object.values(result).sort((a, b) => b.totalReceitas - a.totalReceitas).forEach(item => {
         receitasArr.push({ name: item.name, ...item.recProps });
         despesasArr.push({ name: item.name, ...item.despProps });
-      });
-
+    });
     return { receitas: receitasArr, despesas: despesasArr };
   }, [filteredData]);
 
-  const areasPresentes = useMemo(() => {
-    const areas = new Set();
-    filteredData.forEach(d => {
-       if(d.area && d.area !== 'N/D') areas.add(d.area);
-    });
-    return Array.from(areas);
-  }, [filteredData]);
+  const areasPresentes = useMemo(() => Array.from(new Set(filteredData.map(d => d.area).filter(v => v && v !== 'N/D'))), [filteredData]);
 
-  // --- RANKING DE DIRETORES ---
-  const dataForRanking = useMemo(() => {
-    return data.filter(d => {
-      const matchArea = selectedArea === 'Todos' || d.area === selectedArea;
-      const matchEntidade = selectedEntidade === 'Todos' || d.entidade === selectedEntidade;
-      const matchUnidade = selectedUnidade === 'Todos' || d.unidade === selectedUnidade;
-      return matchArea && matchEntidade && matchUnidade;
-    });
-  }, [data, selectedArea, selectedEntidade, selectedUnidade]);
+  const dataForRanking = useMemo(() => data.filter(d => 
+    (selectedArea === 'Todos' || d.area === selectedArea) && 
+    (selectedEntidade === 'Todos' || d.entidade === selectedEntidade) && 
+    (selectedUnidade === 'Todos' || d.unidade === selectedUnidade)
+  ), [data, selectedArea, selectedEntidade, selectedUnidade]);
   
   const rankingDiretores = useMemo(() => aggregateBy('diretor', dataForRanking), [dataForRanking]);
+  const rankingDiretoresRealizado = useMemo(() => [...rankingDiretores].sort((a, b) => b.roRealizado - a.roRealizado), [rankingDiretores]);
+  const rankingDiretoresMargem = useMemo(() => [...rankingDiretores].map(d => ({
+      ...d, margemPercentual: d.receitas > 0 ? (d.ro2026 / d.receitas) : 0, margemRealizadaPercentual: d.receitas > 0 ? (d.roRealizado / (d.receitas / 6)) : (d.roRealizado > 0 ? 1 : 0)
+  })).sort((a, b) => b.margemPercentual - a.margemPercentual), [rankingDiretores]);
 
-  const rankingDiretoresRealizado = useMemo(() => {
-    return [...rankingDiretores].sort((a, b) => b.roRealizado - a.roRealizado);
-  }, [rankingDiretores]);
+  const crossDiretorStats = useMemo(() => {
+    return rankingDiretores.map(d => {
+      const invData = invByDiretor.find(i => i.name === d.name);
+      return { name: d.name, ro2026: d.ro2026, investimento: invData ? invData.realizado : 0 };
+    }).sort((a,b) => b.investimento - a.investimento);
+  }, [rankingDiretores, invByDiretor]);
 
-  const rankingDiretoresMargem = useMemo(() => {
-    return [...rankingDiretores].map(d => ({
-      ...d,
-      margemPercentual: d.receitas > 0 ? (d.ro2026 / d.receitas) : 0,
-      margemRealizadaPercentual: d.receitas > 0 ? (d.roRealizado / (d.receitas / 6)) : (d.roRealizado > 0 ? 1 : 0)
-    })).sort((a, b) => b.margemPercentual - a.margemPercentual);
-  }, [rankingDiretores]);
+  const efficiencyStats = useMemo(() => {
+    return rankingDiretores.map(d => {
+      const invData = invByDiretor.find(i => i.name === d.name);
+      const investimento = invData ? invData.realizado : 0;
+      const eficienciaProj = investimento > 0 ? (d.ro2026 / investimento) : 0;
+      const eficienciaReal = investimento > 0 ? (d.roRealizado / investimento) : 0;
+      return { name: d.name, ro2026: d.ro2026, roRealizado: d.roRealizado, investimento, eficienciaProj, eficienciaReal };
+    }).filter(d => d.investimento > 0).sort((a, b) => b.eficienciaProj - a.eficienciaProj);
+  }, [rankingDiretores, invByDiretor]);
 
-  // --- GERAÇÃO DE INSIGHTS ESTRATÉGICOS DINÂMICOS ---
-  const insights = useMemo(() => {
+  // --- GERAÇÃO DE INSIGHTS DINÂMICOS (TEXTOS) ---
+  const globalInsights = useMemo(() => {
     const list = [];
     if (filteredData.length === 0) return ["Nenhum dado encontrado para os filtros selecionados."];
-
     if (!hasFilters) {
        list.push(`O portefólio global contempla ${kpis.unidadesUnicas} unidades ativas, projetando um Resultado Operacional anual de ${formatCurrency(kpis.ro)} (margem de ${formatPercent(kpis.margem)}).`);
     } else {
-       list.push(`O recorte de dados selecionado engloba ${kpis.unidadesUnicas} unidades mapeadas. A margem operacional projetada consolidada desta seleção é de ${formatPercent(kpis.margem)}.`);
+       list.push(`O recorte selecionado engloba ${kpis.unidadesUnicas} unidades mapeadas com uma margem projetada de ${formatPercent(kpis.margem)}.`);
     }
 
     if (kpis.ro > 0) {
       if (kpis.roReal >= kpis.metaBimestre) {
-        list.push(`🚀 Tração Acelerada: O R.O realizado no 1º bimestre (${formatCurrency(kpis.roReal)}) superou a meta do período, atingindo ${formatPercent(kpis.atingimentoBimestre)} do esperado. Forte início de execução.`);
+        list.push(`🚀 Tração Acelerada: O R.O realizado no 1º bimestre (${formatCurrency(kpis.roReal)}) superou a meta do período, atingindo ${formatPercent(kpis.atingimentoBimestre)} do esperado.`);
       } else if (kpis.roReal > 0) {
-        list.push(`⚠️ Eficiência Moderada: O realizado no 1º bimestre entregou ${formatPercent(kpis.atingimentoBimestre)} da meta proporcional. O volume e a velocidade das entregas precisam ser escalados urgentemente.`);
+        list.push(`⚠️ Eficiência Moderada: O realizado entregou ${formatPercent(kpis.atingimentoBimestre)} da meta proporcional. Volume e velocidade de entregas precisam ser escalados.`);
       } else {
-        list.push(`🚨 Alerta Crítico de Execução: O R.O do 1º bimestre foi deficitário em ${formatCurrency(kpis.roReal)}, enquanto a expectativa era de lucro. O planejamento tático precisa de profunda revisão analítica.`);
+        list.push(`🚨 Alerta Crítico de Execução: O R.O do 1º bimestre foi deficitário em ${formatCurrency(kpis.roReal)}, contrariando a expectativa de lucro.`);
       }
     } else if (kpis.ro < 0) {
-      list.push(`⚠️ Mitigação de Danos: A carteira já nasce com déficit projetado para o ano (${formatCurrency(kpis.ro)}). A prioridade deve ser eficiência de custos. O déficit realizado até agora é de ${formatCurrency(kpis.roReal)}.`);
+      list.push(`⚠️ Mitigação de Danos: A carteira possui déficit projetado para o ano (${formatCurrency(kpis.ro)}). A prioridade deve ser contenção de custos.`);
     }
-
-    if (hasFilters && dataUnidade.length > 0) {
-      const topUnidade = dataUnidade[0];
-      const deficitarias = dataUnidade.filter(u => u.ro2026 < 0).length;
-      
-      if (topUnidade.roRealizado > 0) {
-        const dependencia = topUnidade.roRealizado / (kpis.roReal > 0 ? kpis.roReal : topUnidade.roRealizado);
-        list.push(`🏆 Destaque e Dependência: A unidade ${topUnidade.name} lidera as entregas reais (${formatCurrency(topUnidade.roRealizado)}), representando representativos ${formatPercent(dependencia)} de todo o R.O positivo gerado.`);
-      }
-      
-      if (deficitarias > 0) {
-        list.push(`📊 Risco de Carteira: ${deficitarias} unidade(s) neste recorte possuem orçamento com déficit estrutural (prejuízo orçado no ano). Exige microgerenciamento de despesas.`);
-      }
-    } else if (!hasFilters && dataDiretor.length > 0) {
-      const topDiretorRealizado = [...dataDiretor].sort((a,b) => b.roRealizado - a.roRealizado)[0];
-      list.push(`🏆 Ranking de Execução: A diretoria de ${topDiretorRealizado.name} assumiu a liderança na eficiência real do ano, consolidando ${formatCurrency(topDiretorRealizado.roRealizado)} já no 1º bimestre.`);
-    }
-
     return list;
-  }, [filteredData, hasFilters, kpis, dataDiretor, dataUnidade]);
+  }, [filteredData, hasFilters, kpis]);
+
+  const dynamicInvInsights = useMemo(() => {
+    if (invByAno.length === 0) return null;
+    const topAno = [...invByAno].sort((a,b) => b.realizado - a.realizado)[0];
+    const topConta = invByConta.length > 0 ? invByConta[0] : null;
+    return { topAno, topConta };
+  }, [invByAno, invByConta]);
+
+  const dynamicExecInsights = useMemo(() => {
+    const dados = !hasFilters ? dataDiretor : dataUnidade;
+    let aceleradas = 0, criticas = 0;
+    dados.forEach(d => {
+      if (d.roRealizado >= d.metaJanFev && d.roRealizado > 0) aceleradas++;
+      if (d.roRealizado < 0 && d.metaJanFev >= 0) criticas++;
+    });
+    return { total: dados.length, aceleradas, criticas };
+  }, [hasFilters, dataDiretor, dataUnidade]);
+
+
+  const efficiencyInsights = useMemo(() => {
+    const list = [];
+    if (efficiencyStats.length > 0) {
+      const topDir = efficiencyStats[0];
+      const bottomDir = [...efficiencyStats].sort((a,b) => a.eficienciaProj - b.eficienciaProj)[0];
+      list.push(`🏆 Maior Eficiência: A diretoria de ${topDir.name} lidera o ROI. Para cada R$ 1 investido historicamente, projeta-se um retorno de ${formatCurrency(topDir.eficienciaProj)} no ano de 2026.`);
+      if(topDir.eficienciaReal > 0) list.push(`📈 Tração Real: No 1º bimestre, a gestão de ${topDir.name} já converteu R$ 1 investido em ${formatCurrency(topDir.eficienciaReal)} de lucro real.`);
+      if(bottomDir.eficienciaProj < 0) list.push(`⚠️ Risco de Capital: A diretoria de ${bottomDir.name} recebeu investimentos, mas o R.O projetado é negativo (a operação não se paga).`);
+      else if (bottomDir.eficienciaProj < 0.1) list.push(`⏳ Retorno Lento: A diretoria de ${bottomDir.name} apresenta o menor multiplicador (${bottomDir.eficienciaProj.toFixed(2)}x sobre o capital investido).`);
+    }
+    return list;
+  }, [efficiencyStats]);
 
   // --- COMPONENTES VISUAIS ---
-  const Card = ({ title, value, subValue, icon: Icon, isPositive, emphasis }) => (
-    <div className={`p-4 lg:p-5 bg-white border ${emphasis ? 'border-blue-900 border-b-4 shadow-sm' : 'border-gray-200'} rounded-none flex flex-col justify-between`}>
+  const Card = ({ title, value, subValue, icon: Icon, isPositive, emphasis, colorClass }) => (
+    <div className={`p-4 lg:p-5 bg-white border ${emphasis ? (colorClass ? `border-${colorClass}-500 border-b-4` : 'border-blue-900 border-b-4') : 'border-gray-200'} shadow-sm rounded-none flex flex-col justify-between`}>
       <div className="flex justify-between items-start mb-3">
         <h3 className="text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-wider w-2/3 leading-tight">{title}</h3>
-        <div className={`p-2 rounded-full shrink-0 ${emphasis ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-700'}`}>
+        <div className={`p-2 rounded-full shrink-0 ${emphasis ? (colorClass ? `bg-${colorClass}-50 text-${colorClass}-600` : 'bg-blue-100 text-blue-900') : 'bg-gray-100 text-gray-700'}`}>
           <Icon size={16} />
         </div>
       </div>
       <div>
-        <p className={`text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight whitespace-nowrap ${emphasis ? 'text-blue-900' : 'text-gray-900'}`}>{value}</p>
+        <p className={`text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight whitespace-nowrap ${emphasis ? (colorClass ? `text-${colorClass}-600` : 'text-blue-900') : 'text-gray-900'}`}>{value}</p>
         {subValue && (
           <p className={`text-[10px] lg:text-xs font-semibold mt-1.5 flex items-center gap-1 ${isPositive === true ? 'text-emerald-600' : isPositive === false ? 'text-rose-600' : 'text-gray-500'}`}>
             {isPositive === true ? <TrendingUp size={12} /> : isPositive === false ? <TrendingDown size={12} /> : null}
@@ -362,89 +418,63 @@ export default function StrategicDashboard() {
     </div>
   );
 
+  const InsightBox = ({ icon: Icon, title, children, color = "blue" }) => (
+    <div className={`bg-${color}-50 border-l-4 border-${color}-500 p-4 mt-4 rounded-r shadow-sm`}>
+      <h4 className={`text-xs font-bold text-${color}-800 uppercase flex items-center gap-2 mb-2`}>
+        <Icon size={16} className={`text-${color}-600`} /> {title}
+      </h4>
+      <p className={`text-xs text-${color}-900 leading-relaxed font-medium`}>{children}</p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans p-4 md:p-8">
-      
       <div className="max-w-7xl mx-auto mb-10">
         
-        {/* HEADER & UPLOAD */}
-        <div className="flex flex-col md:flex-row justify-between items-start mb-8 pb-6 border-b border-gray-300 gap-6">
+        {/* HEADER & UPLOAD DUPLO */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 pb-6 border-b border-gray-300 gap-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 mb-2">Visão por Diretorias</h1>
-            <p className="text-lg text-gray-600 font-medium">Acompanhamento e Comparativo de Realização do Orçamento.</p>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 mb-2">Visão Estratégica & Investimentos</h1>
+            <p className="text-lg text-gray-600 font-medium">Cruzamento financeiro de Orçamentos, Retorno e Histórico de Investimentos.</p>
           </div>
           
-          <div className="flex flex-col md:items-end gap-4 w-full md:w-auto">
-            <img 
-              src="https://i.postimg.cc/RZ7Shjmy/DET_-_azul.png" 
-              alt="Logo DET" 
-              className="h-10 md:h-12 object-contain self-start md:self-end" 
-            />
-            <div className="flex items-center gap-4">
-              {!isDataLoaded && (
-                 <span className="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 border border-amber-300">
-                   Dados de Demonstração
+          <div className="flex flex-col items-start lg:items-end gap-4 w-full lg:w-auto">
+            <img src="https://i.postimg.cc/RZ7Shjmy/DET_-_azul.png" alt="Logo DET" className="h-10 md:h-12 object-contain" />
+            
+            <div className="flex flex-wrap items-center gap-3">
+              {(!isDataLoaded.orcamento || !isDataLoaded.investimentos) && (
+                 <span className="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 border border-amber-300 mr-2">
+                   Apresentando Dados de Demonstração
                  </span>
               )}
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-5 py-3 font-bold text-sm transition-colors shadow-md"
-              >
-                <UploadCloud size={18} />
-                {isDataLoaded ? 'Atualizar CSV' : 'Carregar CSV Completo'}
+              <button onClick={() => fileOrcamentoRef.current?.click()} className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 font-bold text-sm transition-colors shadow-sm">
+                <UploadCloud size={16} /> {isDataLoaded.orcamento ? 'Atualizar Orçamento' : 'Orçamento (CSV)'}
               </button>
-              <input 
-                type="file" 
-                accept=".csv" 
-                ref={fileInputRef} 
-                onChange={handleFileUpload} 
-                className="hidden" 
-              />
+              <input type="file" accept=".csv" ref={fileOrcamentoRef} onChange={handleOrcamentoUpload} className="hidden" />
+
+              <button onClick={() => fileInvRef.current?.click()} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 font-bold text-sm transition-colors shadow-sm">
+                <Wallet size={16} /> {isDataLoaded.investimentos ? 'Atualizar Investimentos' : 'Investimentos (CSV)'}
+              </button>
+              <input type="file" accept=".csv" ref={fileInvRef} onChange={handleInvUpload} className="hidden" />
             </div>
           </div>
         </div>
 
         {error && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 mb-8 font-semibold flex items-center gap-3">
-            <AlertTriangle size={20} />
-            {error}
+            <AlertTriangle size={20} /> {error}
           </div>
         )}
-
-        {/* BLOCO DIDÁTICO INTRODUTÓRIO */}
-        <div className="bg-blue-50 border-l-4 border-blue-600 p-5 mb-8 flex items-start gap-4 shadow-sm">
-          <BookOpen className="text-blue-600 shrink-0 mt-0.5" size={24} />
-          <div>
-            <h2 className="text-sm font-bold text-blue-900 mb-2">Como interpretar este painel de Gestão?</h2>
-            <p className="text-sm text-blue-800 leading-relaxed mb-3">
-              Este dashboard cruza os dados do <strong>Orçamento Projetado para 2026</strong> com o que já foi <strong>Realizado no 1º Bimestre</strong>. 
-              Ao utilizar a barra de filtros avançados abaixo, o painel inteiro readapta-se para refletir exatamente o recorte de responsabilidade selecionado.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white p-3 rounded shadow-sm border border-blue-100">
-                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Resultado Operacional (R.O)</span>
-                <p className="text-xs text-gray-700">É o "lucro" ou "prejuízo" final da operação. Calculado a partir da subtração simples: <strong>Receitas Orçadas - Despesas Orçadas</strong>.</p>
-              </div>
-              <div className="bg-white p-3 rounded shadow-sm border border-blue-100">
-                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">A Margem</span>
-                <p className="text-xs text-gray-700">Indica qual a saúde do negócio. Se a margem é de 10%, significa que de cada R$ 100 de Receita, R$ 10 sobram de fato como Resultado (R.O).</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* BARRA DE FILTROS */}
         <div className="bg-white p-5 border border-gray-200 mb-8 shadow-sm">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
               <Filter size={18} className="text-blue-900" />
-              Painel de Filtros Avançados
+              Filtros Universais (Aplica ao Orçamento e Investimentos)
             </h3>
             {hasFilters && (
-              <button 
-                onClick={resetFilters}
-                className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
-              >
+              <button onClick={resetFilters} className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors">
                 Limpar Filtros
               </button>
             )}
@@ -452,50 +482,26 @@ export default function StrategicDashboard() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                <Users size={14} /> Diretor
-              </label>
-              <select 
-                value={selectedDiretor}
-                onChange={(e) => setSelectedDiretor(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 p-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer"
-              >
+              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"><Users size={14}/> Diretor</label>
+              <select value={selectedDiretor} onChange={(e) => setSelectedDiretor(e.target.value)} className="w-full bg-gray-50 border border-gray-300 p-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer">
                 {diretoresUnicos.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                <Building2 size={14} /> Entidade
-              </label>
-              <select 
-                value={selectedEntidade}
-                onChange={(e) => setSelectedEntidade(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 p-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer"
-              >
+              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"><Building2 size={14}/> Entidade</label>
+              <select value={selectedEntidade} onChange={(e) => setSelectedEntidade(e.target.value)} className="w-full bg-gray-50 border border-gray-300 p-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer">
                 {entidadesUnicas.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
             </div>
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                <Layers size={14} /> Área de Atuação
-              </label>
-              <select 
-                value={selectedArea}
-                onChange={(e) => setSelectedArea(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 p-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer"
-              >
+              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"><Layers size={14}/> Área de Atuação</label>
+              <select value={selectedArea} onChange={(e) => setSelectedArea(e.target.value)} className="w-full bg-gray-50 border border-gray-300 p-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer">
                 {areasUnicas.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                <MapPin size={14} /> Unidade
-              </label>
-              <select 
-                value={selectedUnidade}
-                onChange={(e) => setSelectedUnidade(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 p-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer"
-              >
+              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"><MapPin size={14}/> Unidade</label>
+              <select value={selectedUnidade} onChange={(e) => setSelectedUnidade(e.target.value)} className="w-full bg-gray-50 border border-gray-300 p-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer">
                 {unidadesUnicas.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
@@ -503,23 +509,24 @@ export default function StrategicDashboard() {
         </div>
 
         {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-8">
           <Card title="Unidades Atendidas" value={kpis.unidadesUnicas} icon={MapPin} />
-          <Card title="Receitas Projetadas" value={formatCurrency(kpis.rec)} icon={Target} />
-          <Card title="Despesas Projetadas" value={formatCurrency(kpis.desp)} icon={FileText} />
-          <Card title="R.O Projetado (Ano)" value={formatCurrency(kpis.ro)} subValue={`Margem: ${formatPercent(kpis.margem)}`} icon={DollarSign} isPositive={kpis.ro >= 0} emphasis={true} />
-          <Card title="Meta R.O (Bimestre)" value={formatCurrency(kpis.metaBimestre)} subValue={`16.6% do Ano`} icon={Activity} />
-          <Card title="R.O Realizado" value={formatCurrency(kpis.roReal)} subValue={kpis.metaBimestre > 0 ? `${formatPercent(kpis.atingimentoBimestre)} da meta bi.` : 'Meta base deficitária'} icon={BarChart2} isPositive={kpis.roReal >= kpis.metaBimestre && kpis.metaBimestre > 0} />
+          <Card title="Receitas (Proj.)" value={formatCurrency(kpis.rec)} icon={Target} />
+          <Card title="Despesas (Proj.)" value={formatCurrency(kpis.desp)} icon={FileText} />
+          <Card title="R.O (Ano)" value={formatCurrency(kpis.ro)} subValue={`Margem: ${formatPercent(kpis.margem)}`} icon={DollarSign} isPositive={kpis.ro >= 0} emphasis={true} />
+          <Card title="Meta R.O (Bi)" value={formatCurrency(kpis.metaBimestre)} subValue={`16.6% do Ano`} icon={Activity} />
+          <Card title="R.O (Realizado)" value={formatCurrency(kpis.roReal)} subValue={kpis.metaBimestre > 0 ? `${formatPercent(kpis.atingimentoBimestre)} da meta.` : 'Déficit'} icon={BarChart2} isPositive={kpis.roReal >= kpis.metaBimestre && kpis.metaBimestre > 0} />
+          <Card title="Total Investido" value={formatCurrency(kpis.invTotal)} subValue={`Base Histórica`} icon={Wallet} emphasis={true} colorClass="indigo" />
         </div>
 
-        {/* INSIGHTS DO ESPECIALISTA */}
+        {/* GLOBAL INSIGHTS */}
         <div className="bg-white border-l-4 border-blue-900 border-y border-r border-y-gray-200 border-r-gray-200 p-6 md:p-8 mb-10 shadow-sm">
           <h2 className="text-sm font-black uppercase tracking-widest text-gray-800 mb-6 flex items-center gap-2">
             <Briefcase size={18} className="text-blue-900"/>
-            Diagnóstico de Execução {hasFilters ? `- Seleção Filtrada` : ''}
+            Diagnóstico de Execução Global {hasFilters ? `- Seleção Filtrada` : ''}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {insights.map((insight, idx) => (
+            {globalInsights.map((insight, idx) => (
               <div key={idx} className="flex gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
                 <p className="text-gray-700 font-medium text-sm leading-relaxed">{insight}</p>
@@ -528,30 +535,205 @@ export default function StrategicDashboard() {
           </div>
         </div>
 
-        {/* BALANÇO FINANCEIRO (Scroll Horizontal com Inline Style Fallback) */}
+        {/* =========================================================================
+            SESSÃO 1: INVESTIMENTOS HISTÓRICOS E CRUZAMENTOS 
+        ========================================================================= */}
+        <div className="mt-14 mb-8">
+           <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3 border-b pb-3 border-gray-300">
+             <Wallet className="text-indigo-600" size={28}/> Visão de Investimentos Históricos
+           </h2>
+
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+              {/* TIMELINE DE INVESTIMENTOS */}
+              <div className="lg:col-span-2 border border-gray-200 p-6 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="mb-4 border-b border-gray-100 pb-2">
+                    <h3 className="text-sm font-bold uppercase text-gray-900 mb-1">Evolução do Volume Investido (Anual)</h3>
+                    <p className="text-xs text-gray-500">Capital direcionado às unidades ao longo dos anos registrados.</p>
+                  </div>
+                  <div className="overflow-x-auto overflow-y-hidden" style={{ height: '260px' }}>
+                    <div style={{ minWidth: '100%', width: Math.max(600, invByAno.length * 60), height: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={invByAno} margin={{ top: 25, right: 20, left: 10, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                          <XAxis dataKey="name" tick={{fill: '#64748B', fontSize: 12, fontWeight: 600}} axisLine={false} tickLine={false} />
+                          <YAxis tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#64748B', fontSize: 11}} axisLine={false} tickLine={false} />
+                          <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} />
+                          <Bar dataKey="realizado" name="Investimento Realizado" fill="#6366F1" radius={[4, 4, 0, 0]}>
+                             <LabelList dataKey="realizado" position="top" formatter={formatCompact} style={{ fontSize: '11px', fill: '#4F46E5', fontWeight: 600 }} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+                
+                <InsightBox icon={TrendingUpIcon} title="Leitura de Tendência (CAPEX)" color="indigo">
+                  A análise temporal ajuda a identificar os ciclos de expansão da rede. 
+                  {dynamicInvInsights?.topAno ? ` O pico de investimentos neste recorte ocorreu em ${dynamicInvInsights.topAno.name}, somando ${formatCurrency(dynamicInvInsights.topAno.realizado)}. Historicamente, picos de investimento (Capex) precedem saltos na projeção de receitas nos anos seguintes.` : ''}
+                </InsightBox>
+              </div>
+
+              {/* PIE CHART - CATEGORIAS */}
+              <div className="border border-gray-200 p-6 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="mb-4 border-b border-gray-100 pb-2">
+                    <h3 className="text-sm font-bold uppercase text-gray-900 mb-1">Distribuição por Categoria</h3>
+                    <p className="text-xs text-gray-500">Principais naturezas de conta que receberam recursos.</p>
+                  </div>
+                  <div style={{ height: '260px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={invByConta} dataKey="realizado" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                          {invByConta.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                        </Pie>
+                        <RechartsTooltip formatter={(val) => formatCurrency(val)} />
+                        <Legend layout="vertical" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontWeight: 600, fontSize: '10px', color: '#475569', paddingTop: '10px' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <InsightBox icon={Target} title="Estratégia de Alocação" color="indigo">
+                  O perfil do gasto reflete a estratégia corporativa. Foco em "Construções" indica expansão física; "Informática/Equipamentos" aponta para modernização tecnológica.
+                  {dynamicInvInsights?.topConta ? ` A rubrica líder é "${dynamicInvInsights.topConta.name}".` : ''}
+                </InsightBox>
+              </div>
+           </div>
+
+           {/* QUADRO DE EFICIÊNCIA (ROI) POR DIRETOR */}
+           <div className="border border-gray-200 p-6 bg-white shadow-sm mb-12">
+              <div className="mb-6 border-b border-gray-100 pb-4">
+                <h3 className="text-sm font-bold uppercase text-gray-900 mb-2 flex items-center gap-2">
+                  <Target size={18} className="text-indigo-600" />
+                  Análise de Eficiência: Retorno sobre o Investimento (ROI) por Diretor
+                </h3>
+                <p className="text-xs text-gray-600 leading-relaxed max-w-4xl">
+                  <strong>Multiplicador de Capital (Metodologia):</strong> Compara o volume total investido nos últimos 5 anos com a capacidade da gestão de gerar Resultado Operacional. A métrica de <em>Eficiência Projetada</em> ilustra quantos Reais (R$) de resultado orçado retornam para cada R$ 1 investido historicamente. Diretores sem histórico de investimento foram omitidos do gráfico para garantir a equidade analítica.
+                </p>
+              </div>
+
+              {/* INSIGHTS DE EFICIÊNCIA */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {efficiencyInsights.map((insight, idx) => (
+                  <div key={idx} className="bg-indigo-50 border-l-4 border-indigo-600 p-4 rounded-r shadow-sm">
+                    <p className="text-indigo-900 text-xs font-medium leading-relaxed">{insight}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* GRÁFICO DE RANKING DE EFICIÊNCIA */}
+                <div className="xl:col-span-1 overflow-y-auto overflow-x-hidden pr-2 border border-gray-100" style={{ height: '400px' }}>
+                  <div className="bg-gray-50 border-b border-gray-200 p-2 sticky top-0 z-10"><h4 className="text-xs font-bold text-center text-gray-600 uppercase">Ranking (ROI Projetado)</h4></div>
+                  <div style={{ minHeight: '100%', height: Math.max(400, efficiencyStats.length * 50) }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={efficiencyStats} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
+                        <XAxis type="number" tickFormatter={(val) => `${val.toFixed(1)}x`} tick={{fill: '#64748B', fontSize: 11}} />
+                        <YAxis type="category" dataKey="name" interval={0} width={100} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 11}} axisLine={false} tickLine={false} />
+                        <RechartsTooltip formatter={(val) => `${Number(val).toFixed(2)}x`} cursor={{fill: '#F8FAFC'}} />
+                        <ReferenceLine x={0} stroke="#94A3B8" />
+                        <Bar dataKey="eficienciaProj" name="Multiplicador (R$ Retorno / R$ Inv.)" fill="#10B981" barSize={16} radius={[0, 4, 4, 0]}>
+                          {efficiencyStats.map((entry, index) => <Cell key={`cell-eff-${index}`} fill={entry.eficienciaProj >= 0 ? '#10B981' : '#F43F5E'} />)}
+                          <LabelList dataKey="eficienciaProj" position="right" formatter={(val) => `${Number(val).toFixed(2)}x`} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* TABELA COMPARATIVA DE ROI */}
+                <div className="xl:col-span-2 overflow-x-auto overflow-y-auto border border-gray-100" style={{ height: '400px' }}>
+                  <table className="w-full text-left text-sm relative">
+                    <thead className="sticky top-0 bg-white shadow-sm z-10">
+                      <tr className="border-b-2 border-gray-900 bg-gray-50">
+                        <th className="py-3 px-3 font-bold text-gray-900">Diretor</th>
+                        <th className="py-3 px-3 font-bold text-indigo-700 text-right">Inv. Histórico (5 Anos)</th>
+                        <th className="py-3 px-3 font-bold text-blue-700 text-right">R.O Orçado (2026)</th>
+                        <th className="py-3 px-3 font-bold text-gray-900 text-right">R.O Realizado</th>
+                        <th className="py-3 px-3 font-bold text-gray-900 text-right">Eficiência (Proj.)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {efficiencyStats.map((item, idx) => (
+                        <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-3 px-3 font-semibold text-gray-800">{item.name}</td>
+                          <td className="py-3 px-3 text-right font-medium text-indigo-600 bg-indigo-50/20">{formatCurrency(item.investimento)}</td>
+                          <td className="py-3 px-3 text-right font-medium text-blue-600">{formatCurrency(item.ro2026)}</td>
+                          <td className={`py-3 px-3 text-right font-bold ${item.roRealizado >= 0 ? 'text-gray-900' : 'text-rose-600'}`}>{formatCurrency(item.roRealizado)}</td>
+                          <td className="py-3 px-3 text-right">
+                            <span className={`px-2 py-1 text-[11px] font-bold rounded ${item.eficienciaProj >= 1 ? 'bg-emerald-100 text-emerald-800' : item.eficienciaProj > 0 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
+                              {item.eficienciaProj.toFixed(2)}x
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+           </div>
+
+           {/* CRUZAMENTO DIRETOR: R.O vs INVESTIMENTOS (LINHA x BARRA) */}
+           <div className="border border-gray-200 p-6 bg-white shadow-sm mb-12">
+              <div className="mb-6 border-b border-gray-100 pb-4">
+                <h3 className="text-sm font-bold uppercase text-gray-900 mb-2">Auditoria de Volume: Investimentos vs Resultado Operacional por Diretor</h3>
+                <p className="text-xs text-gray-600 leading-relaxed max-w-4xl">
+                  <strong>Equilíbrio de Volume Financeiro:</strong> Cruza o volume bruto de <strong>Investimentos Realizados</strong> com o <strong>Resultado Operacional (R.O) Prometido para 2026</strong>. O gestor que concentra o maior volume de ativos físicos (barras roxas) deverá, em tese, puxar a linha de resultado orçado (linha preta) de forma proporcional para justificar a manutenção daquele capital.
+                </p>
+              </div>
+              <div className="overflow-x-auto overflow-y-hidden pb-4" style={{ height: '400px' }}>
+                <div style={{ minWidth: '100%', width: Math.max(900, crossDiretorStats.length * 120), height: '100%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={crossDiretorStats} margin={{ top: 25, right: 30, left: 20, bottom: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                      <XAxis dataKey="name" interval={0} angle={-35} textAnchor="end" height={80} tick={{fill: '#0F172A', fontSize: 11, fontWeight: 600}} axisLine={false} tickLine={false} />
+                      <YAxis yAxisId="left" tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#6366F1', fontSize: 11, fontWeight: 600}} axisLine={false} tickLine={false} />
+                      <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#3B82F6', fontSize: 11, fontWeight: 600}} axisLine={false} tickLine={false} />
+                      
+                      <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} />
+                      <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 'bold' }} />
+                      <ReferenceLine y={0} yAxisId="right" stroke="#94A3B8" />
+                      
+                      <Bar yAxisId="left" dataKey="investimento" name="Total Investido (Histórico)" fill="#818CF8" radius={[4, 4, 0, 0]} barSize={40}>
+                         <LabelList dataKey="investimento" position="top" formatter={formatCompact} style={{ fontSize: '11px', fill: '#4F46E5', fontWeight: 600 }} />
+                      </Bar>
+                      <Line yAxisId="right" type="monotone" dataKey="ro2026" name="R.O Projetado (2026)" stroke="#0F172A" strokeWidth={3} dot={{r: 6, fill: '#0F172A', strokeWidth: 2, stroke: '#fff'}} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+           </div>
+        </div>
+
+        {/* =========================================================================
+            SESSÃO 2: ORÇAMENTO E EXECUÇÃO 
+        ========================================================================= */}
+        <h2 className="text-2xl font-black text-gray-900 mt-16 mb-6 flex items-center gap-3 border-b pb-3 border-gray-300">
+          <Briefcase className="text-blue-900" size={28}/> Execução Orçamentária 2026
+        </h2>
+
+        {/* BALANÇO FINANCEIRO */}
         <div className="border border-gray-200 p-6 bg-white shadow-sm mb-8">
-          <div className="mb-6 border-b border-gray-100 pb-4">
+          <div className="mb-4 border-b border-gray-100 pb-4">
             <h3 className="text-sm font-bold uppercase text-gray-900 mb-2">Balanço Financeiro: Receitas vs Despesas = Resultado Operacional</h3>
-            <p className="text-xs text-gray-600 leading-relaxed max-w-3xl">
-              <strong>Equação de Viabilidade:</strong> Cruza as <strong>Receitas (+)</strong> e <strong>Despesas (-)</strong> projetadas por Área de Negócio. A linha ilustra o <strong>Resultado Operacional (R.O)</strong>.
+            <p className="text-xs text-gray-600 leading-relaxed max-w-4xl">
+              <strong>A Equação de Viabilidade:</strong> Cruza as <strong>Receitas (+)</strong> e <strong>Despesas (-)</strong> projetadas por Área. A linha ilustra o <strong>Resultado Operacional (R.O)</strong>. Áreas de negócio onde a despesa se aproxima perigosamente da receita ("gap estreito") exigem revisão de precificação dos serviços (Ticket Médio) ou programas rigorosos de corte de custos operacionais.
             </p>
           </div>
-          <div className="overflow-x-auto overflow-y-hidden pb-4" style={{ height: '450px' }}>
+          <div className="overflow-x-auto overflow-y-hidden pb-4" style={{ height: '400px' }}>
             <div style={{ minWidth: '100%', width: Math.max(800, dataArea.length * 80), height: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={dataArea} margin={{ top: 25, right: 30, left: 20, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis dataKey="name" interval={0} angle={-45} textAnchor="end" height={100} tick={{fill: '#64748B', fontSize: 11, fontWeight: 600}} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" interval={0} angle={-35} textAnchor="end" height={80} tick={{fill: '#64748B', fontSize: 11, fontWeight: 600}} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(val) => `R$ ${(val/1000000).toFixed(1)}M`} tick={{fill: '#64748B', fontSize: 11}} axisLine={false} tickLine={false} />
-                  <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} contentStyle={{ border: 'none', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
+                  <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} />
                   <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 'bold' }} />
                   <ReferenceLine y={0} stroke="#94A3B8" />
-                  <Bar dataKey="receitas" name="Receitas (+)" fill="#10B981" radius={[4, 4, 0, 0]}>
-                     <LabelList dataKey="receitas" position="top" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
-                  </Bar>
-                  <Bar dataKey="despesas" name="Despesas (-)" fill="#F43F5E" radius={[4, 4, 0, 0]}>
-                     <LabelList dataKey="despesas" position="top" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
-                  </Bar>
+                  <Bar dataKey="receitas" name="Receitas (+)" fill="#10B981" radius={[4, 4, 0, 0]}><LabelList dataKey="receitas" position="top" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} /></Bar>
+                  <Bar dataKey="despesas" name="Despesas (-)" fill="#F43F5E" radius={[4, 4, 0, 0]}><LabelList dataKey="despesas" position="top" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} /></Bar>
                   <Line type="monotone" dataKey="ro2026" name="R.O Projetado (=)" stroke="#0F172A" strokeWidth={3} dot={{r: 5, fill: '#0F172A'}} />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -559,203 +741,199 @@ export default function StrategicDashboard() {
           </div>
         </div>
 
-        {/* COMPARATIVO DE EXECUÇÃO (Scroll Horizontal com Inline Style Fallback) */}
-        <div className="border border-gray-200 p-6 bg-white shadow-sm mb-8">
-          <div className="mb-6 border-b border-gray-100 pb-4">
-            <h3 className="text-sm font-bold uppercase text-gray-900 mb-2">Comparativo de Execução: Meta Proporcional (Jan/Fev) vs Realizado</h3>
-            <p className="text-xs text-gray-600 leading-relaxed max-w-3xl">
-              <strong>Entendendo o gráfico:</strong> Para garantir que a unidade cumpra a promessa anual, ela precisa de ritmo constante. A <strong>barra cinza</strong> mostra a meta teórica. A <strong>barra colorida</strong> mostra a realidade.
-            </p>
-          </div>
-          <div className="overflow-x-auto overflow-y-hidden pb-4" style={{ height: '450px' }}>
-            <div style={{ minWidth: '100%', width: Math.max(800, (!hasFilters ? dataDiretor : dataUnidade).length * 80), height: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={(!hasFilters ? dataDiretor : dataUnidade)} margin={{ top: 25, right: 30, left: 20, bottom: 80 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis dataKey="name" interval={0} angle={-45} textAnchor="end" height={100} tick={{fill: '#64748B', fontSize: 11, fontWeight: 600}} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#64748B', fontSize: 11}} axisLine={false} tickLine={false} />
-                  <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} contentStyle={{ border: 'none', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
-                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 'bold' }} />
-                  <ReferenceLine y={0} stroke="#94A3B8" />
-                  <Bar dataKey="metaJanFev" name="Meta Proporcional (Jan/Fev)" fill="#CBD5E1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="roRealizado" name="Realizado (Jan/Fev)" radius={[4, 4, 0, 0]}>
-                    {(!hasFilters ? dataDiretor : dataUnidade).map((entry, index) => {
-                      let cellColor = '#f43f5e'; 
-                      if (entry.metaJanFev <= 0 && entry.roRealizado <= 0) cellColor = '#9ca3af'; 
-                      else if (entry.roRealizado >= entry.metaJanFev) cellColor = '#34d399'; 
-                      return <Cell key={`cell-${index}`} fill={cellColor} />;
-                    })}
-                    <LabelList dataKey="roRealizado" position="top" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+        {/* COMPARATIVO DE EXECUÇÃO */}
+        <div className="border border-gray-200 p-6 bg-white shadow-sm mb-8 flex flex-col justify-between">
+          <div>
+            <div className="mb-4 border-b border-gray-100 pb-4">
+              <h3 className="text-sm font-bold uppercase text-gray-900 mb-2">Comparativo de Execução: Meta Proporcional (Jan/Fev) vs Realizado</h3>
+              <p className="text-xs text-gray-600 leading-relaxed max-w-4xl">
+                <strong>Análise do Ritmo de Execução:</strong> Para garantir que a unidade cumpra a promessa anual orçada, ela precisa de um ritmo constante de geração de lucro desde o dia 1. A <strong>barra cinza</strong> sinaliza a meta teórica (a promessa anual dividida pelos meses). A <strong>barra colorida</strong> mostra a realidade executada. Se a barra for vermelha, a operação está a queimar o tempo ("runway") sem entregar o resultado esperado.
+              </p>
+            </div>
+            <div className="overflow-x-auto overflow-y-hidden pb-4" style={{ height: '350px' }}>
+              <div style={{ minWidth: '100%', width: Math.max(800, (!hasFilters ? dataDiretor : dataUnidade).length * 80), height: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={(!hasFilters ? dataDiretor : dataUnidade)} margin={{ top: 25, right: 30, left: 20, bottom: 80 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="name" interval={0} angle={-35} textAnchor="end" height={80} tick={{fill: '#64748B', fontSize: 11, fontWeight: 600}} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#64748B', fontSize: 11}} axisLine={false} tickLine={false} />
+                    <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} />
+                    <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 'bold' }} />
+                    <ReferenceLine y={0} stroke="#94A3B8" />
+                    <Bar dataKey="metaJanFev" name="Meta Proporcional (Jan/Fev)" fill="#CBD5E1" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="roRealizado" name="Realizado (Jan/Fev)" radius={[4, 4, 0, 0]}>
+                      {(!hasFilters ? dataDiretor : dataUnidade).map((entry, index) => {
+                        let cellColor = '#f43f5e'; 
+                        if (entry.metaJanFev <= 0 && entry.roRealizado <= 0) cellColor = '#9ca3af'; 
+                        else if (entry.roRealizado >= entry.metaJanFev) cellColor = '#34d399'; 
+                        return <Cell key={`cell-${index}`} fill={cellColor} />;
+                      })}
+                      <LabelList dataKey="roRealizado" position="top" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
+          <InsightBox icon={AlertCircle} title="Radar de Execução" color="blue">
+            Das {dynamicExecInsights.total} entidades representadas no gráfico acima, <strong>{dynamicExecInsights.aceleradas}</strong> estão com forte tração (batendo a meta verde). Atenção especial para as <strong>{dynamicExecInsights.criticas}</strong> operações que acenderam o alerta crítico de ritmo (barras vermelhas invadindo o quadrante negativo).
+          </InsightBox>
         </div>
 
-        {/* RANKING DE DIRETORES (Scroll Vertical Conjunto com Inline Style Fallback) */}
+        {/* RANKING DE DIRETORES */}
         <div className="border border-gray-200 p-6 bg-white shadow-sm mb-8">
           <div className="mb-6 border-b border-gray-100 pb-4">
             <h3 className="text-sm font-bold uppercase text-gray-900 mb-2">Ranking de Resultado Operacional (R.O) por Diretor</h3>
-            <p className="text-xs text-gray-600 leading-relaxed max-w-3xl">
-              <strong>Visão de Liderança:</strong> Posição de cada diretoria em relação ao R.O Projetado, o Acumulado (Realizado) e a Margem Operacional. Para calcular a <strong>Margem Realizada do Bimestre</strong>, utiliza-se a proporção linear da receita esperada no período.
+            <p className="text-xs text-gray-600 leading-relaxed max-w-4xl">
+              <strong>Múltiplas Lentes de Liderança:</strong> 
+              (1) <em>R.O Projetado</em> demonstra quem carrega o maior peso e responsabilidade do portfólio anual. 
+              (2) <em>R.O Acumulado</em> audita quem efetivamente já materializou ganhos neste ano. 
+              (3) A <em>Margem</em> reflete não o tamanho, mas a inteligência do negócio (uma diretoria menor em volume financeiro pode ser a mais rentável proporcionalmente à sua receita).
             </p>
           </div>
-          <div className="overflow-y-auto overflow-x-hidden pr-2" style={{ height: '500px' }}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: '100%', height: Math.max(500, rankingDiretores.length * 60) }}>
+          <div className="overflow-y-auto overflow-x-hidden pr-2" style={{ height: '450px' }}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: '100%', height: Math.max(450, rankingDiretores.length * 60) }}>
               
-              <div className="h-full flex flex-col">
-                <h4 className="text-xs font-bold text-gray-500 uppercase text-center mb-2">R.O Projetado (Ano)</h4>
-                <div className="flex-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={rankingDiretores} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
-                      <XAxis type="number" tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#64748B', fontSize: 11}} />
-                      <YAxis type="category" dataKey="name" interval={0} width={120} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 11}} axisLine={false} tickLine={false} />
-                      <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} contentStyle={{ border: 'none', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
-                      <ReferenceLine x={0} stroke="#94A3B8" />
-                      <Bar dataKey="ro2026" name="R.O Projetado (Ano)" fill="#3B82F6" barSize={16} radius={[0, 4, 4, 0]}>
-                        {rankingDiretores.map((entry, index) => <Cell key={`cell-proj-${index}`} fill={entry.ro2026 >= 0 ? '#3B82F6' : '#94A3B8'} />)}
-                        <LabelList dataKey="ro2026" position="right" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
-                      </Bar>
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="h-full flex flex-col border border-gray-100 rounded-sm">
+                <div className="bg-gray-50 border-b border-gray-200 p-2 sticky top-0 z-10"><h4 className="text-xs font-bold text-center text-gray-600 uppercase">1. R.O Projetado (Ano)</h4></div>
+                <div className="flex-1 mt-2"><ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={rankingDiretores} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
+                    <XAxis type="number" tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#64748B', fontSize: 11}} />
+                    <YAxis type="category" dataKey="name" interval={0} width={120} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 11}} axisLine={false} tickLine={false} />
+                    <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} />
+                    <ReferenceLine x={0} stroke="#94A3B8" />
+                    <Bar dataKey="ro2026" name="R.O Projetado (Ano)" fill="#3B82F6" barSize={16} radius={[0, 4, 4, 0]}>
+                      {rankingDiretores.map((entry, index) => <Cell key={`cell-proj-${index}`} fill={entry.ro2026 >= 0 ? '#3B82F6' : '#94A3B8'} />)}
+                      <LabelList dataKey="ro2026" position="right" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
+                    </Bar>
+                  </ComposedChart>
+                </ResponsiveContainer></div>
               </div>
 
-              <div className="h-full flex flex-col">
-                <h4 className="text-xs font-bold text-gray-500 uppercase text-center mb-2">R.O Acumulado (Realizado)</h4>
-                <div className="flex-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={rankingDiretoresRealizado} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
-                      <XAxis type="number" tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#64748B', fontSize: 11}} />
-                      <YAxis type="category" dataKey="name" interval={0} width={120} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 11}} axisLine={false} tickLine={false} />
-                      <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} contentStyle={{ border: 'none', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
-                      <ReferenceLine x={0} stroke="#94A3B8" />
-                      <Bar dataKey="roRealizado" name="R.O Acumulado" barSize={16} radius={[0, 4, 4, 0]}>
-                        {rankingDiretoresRealizado.map((entry, index) => <Cell key={`cell-real-${index}`} fill={entry.roRealizado >= 0 ? '#10B981' : '#F43F5E'} />)}
-                        <LabelList dataKey="roRealizado" position="right" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
-                      </Bar>
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="h-full flex flex-col border border-gray-100 rounded-sm">
+                <div className="bg-gray-50 border-b border-gray-200 p-2 sticky top-0 z-10"><h4 className="text-xs font-bold text-center text-gray-600 uppercase">2. R.O Acumulado (Jan/Fev)</h4></div>
+                <div className="flex-1 mt-2"><ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={rankingDiretoresRealizado} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
+                    <XAxis type="number" tickFormatter={(val) => `R$ ${(val/1000).toFixed(0)}k`} tick={{fill: '#64748B', fontSize: 11}} />
+                    <YAxis type="category" dataKey="name" interval={0} width={120} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 11}} axisLine={false} tickLine={false} />
+                    <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} />
+                    <ReferenceLine x={0} stroke="#94A3B8" />
+                    <Bar dataKey="roRealizado" name="R.O Acumulado" barSize={16} radius={[0, 4, 4, 0]}>
+                      {rankingDiretoresRealizado.map((entry, index) => <Cell key={`cell-real-${index}`} fill={entry.roRealizado >= 0 ? '#10B981' : '#F43F5E'} />)}
+                      <LabelList dataKey="roRealizado" position="right" formatter={formatCompact} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
+                    </Bar>
+                  </ComposedChart>
+                </ResponsiveContainer></div>
               </div>
 
-              <div className="h-full flex flex-col">
-                <h4 className="text-xs font-bold text-gray-500 uppercase text-center mb-2">Margem (% R.O / Receita)</h4>
-                <div className="flex-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={rankingDiretoresMargem} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
-                      <XAxis type="number" tickFormatter={(val) => formatPercent(val)} tick={{fill: '#64748B', fontSize: 11}} />
-                      <YAxis type="category" dataKey="name" interval={0} width={120} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 11}} axisLine={false} tickLine={false} />
-                      <RechartsTooltip formatter={(val) => formatPercent(val)} cursor={{fill: '#F8FAFC'}} contentStyle={{ border: 'none', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
-                      <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '11px', fontWeight: 'bold' }} />
-                      <ReferenceLine x={0} stroke="#94A3B8" />
-                      
-                      <Bar dataKey="margemPercentual" name="Projetada (Ano)" barSize={10} fill="#CBD5E1" radius={[0, 4, 4, 0]}>
-                        <LabelList dataKey="margemPercentual" position="right" formatter={(val) => formatPercent(val)} style={{ fontSize: '10px', fill: '#94A3B8', fontWeight: 600 }} />
-                      </Bar>
-
-                      <Bar dataKey="margemRealizadaPercentual" name="Realizada (Bimestre)" barSize={10} radius={[0, 4, 4, 0]}>
-                        {rankingDiretoresMargem.map((entry, index) => {
-                          let cellColor = '#8B5CF6'; 
-                          if (entry.margemRealizadaPercentual < 0) cellColor = '#F43F5E'; 
-                          else if (entry.margemRealizadaPercentual >= entry.margemPercentual) cellColor = '#10B981'; 
-                          else cellColor = '#F59E0B'; 
-                          return <Cell key={`cell-margem-real-${index}`} fill={cellColor} />;
-                        })}
-                        <LabelList dataKey="margemRealizadaPercentual" position="right" formatter={(val) => formatPercent(val)} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
-                      </Bar>
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="h-full flex flex-col border border-gray-100 rounded-sm">
+                <div className="bg-gray-50 border-b border-gray-200 p-2 sticky top-0 z-10"><h4 className="text-xs font-bold text-center text-gray-600 uppercase">3. Margem de Rentabilidade (%)</h4></div>
+                <div className="flex-1 mt-2"><ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={rankingDiretoresMargem} layout="vertical" margin={{ top: 10, right: 45, left: 10, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
+                    <XAxis type="number" tickFormatter={(val) => formatPercent(val)} tick={{fill: '#64748B', fontSize: 11}} />
+                    <YAxis type="category" dataKey="name" interval={0} width={120} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 11}} axisLine={false} tickLine={false} />
+                    <RechartsTooltip formatter={(val) => formatPercent(val)} cursor={{fill: '#F8FAFC'}} />
+                    <ReferenceLine x={0} stroke="#94A3B8" />
+                    <Bar dataKey="margemPercentual" name="Projetada (Ano)" barSize={10} fill="#CBD5E1" radius={[0, 4, 4, 0]}>
+                      <LabelList dataKey="margemPercentual" position="right" formatter={(val) => formatPercent(val)} style={{ fontSize: '10px', fill: '#94A3B8', fontWeight: 600 }} />
+                    </Bar>
+                    <Bar dataKey="margemRealizadaPercentual" name="Realizada (Bi)" barSize={10} radius={[0, 4, 4, 0]}>
+                      {rankingDiretoresMargem.map((entry, index) => {
+                        let cellColor = '#8B5CF6'; 
+                        if (entry.margemRealizadaPercentual < 0) cellColor = '#F43F5E'; 
+                        else if (entry.margemRealizadaPercentual >= entry.margemPercentual) cellColor = '#10B981'; 
+                        else cellColor = '#F59E0B'; 
+                        return <Cell key={`cell-margem-real-${index}`} fill={cellColor} />;
+                      })}
+                      <LabelList dataKey="margemRealizadaPercentual" position="right" formatter={(val) => formatPercent(val)} style={{ fontSize: '10px', fill: '#475569', fontWeight: 600 }} />
+                    </Bar>
+                  </ComposedChart>
+                </ResponsiveContainer></div>
               </div>
 
             </div>
           </div>
         </div>
 
-        {/* MATRIZ DE COMPOSIÇÃO: RECEITAS VS DESPESAS (Scroll Vertical Conjunto com Inline Style Fallback) */}
-        <div className="border border-gray-200 p-6 bg-white shadow-sm mb-8">
-          <div className="mb-6 border-b border-gray-100 pb-4">
-            <h3 className="text-sm font-bold uppercase text-gray-900 mb-2">Composição Financeira: Receitas vs Despesas por Área de Negócio</h3>
-            <p className="text-xs text-gray-600 leading-relaxed max-w-3xl">
-              <strong>Matriz de Atuação:</strong> Visualiza como a Receita (esquerda) e a Despesa (direita) de cada unidade são fatiadas entre as suas diferentes áreas.
-            </p>
-          </div>
-          
-          <div className="overflow-y-auto overflow-x-hidden pr-2" style={{ height: '500px' }}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" style={{ minHeight: '100%', height: Math.max(500, dataMatriz.receitas.length * 50) }}>
-              
-              <div className="h-full flex flex-col">
-                <h4 className="text-xs font-bold text-gray-500 uppercase text-center mb-2">Fatiamento de Receitas</h4>
-                <div className="flex-1">
-                  <ResponsiveContainer width="100%" height="100%">
+        {/* MATRIZ DE COMPOSIÇÃO LADO A LADO E PIE CHART */}
+        <div className="border border-gray-200 p-6 bg-white shadow-sm mb-8 flex flex-col justify-between">
+          <div>
+            <div className="mb-4 border-b border-gray-100 pb-4">
+              <h3 className="text-sm font-bold uppercase text-gray-900 mb-2">Composição Financeira: Receitas vs Despesas por Área de Negócio</h3>
+              <p className="text-xs text-gray-600 leading-relaxed max-w-4xl">
+                <strong>Análise de Diversificação:</strong> Visualiza como o dinheiro Entra (Esquerda) e Sai (Direita) das contas de cada unidade. Permite identificar de imediato se uma unidade consome a maior parte do seu orçamento na mesma área de negócio em que gera a sua maior receita (autossustentabilidade) ou se áreas lucrativas estão a subsidiar áreas deficitárias dentro do mesmo pólo.
+              </p>
+            </div>
+            
+            <div className="overflow-y-auto overflow-x-hidden pr-2" style={{ height: '400px' }}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" style={{ minHeight: '100%', height: Math.max(400, dataMatriz.receitas.length * 50) }}>
+                
+                <div className="h-full flex flex-col">
+                  <div className="bg-emerald-50 border-b border-emerald-200 p-2 sticky top-0 z-10"><h4 className="text-xs font-bold text-center text-emerald-800 uppercase">Fatiamento de Receitas Geradas</h4></div>
+                  <div className="flex-1 mt-2"><ResponsiveContainer width="100%" height="100%">
                     <BarChart data={dataMatriz.receitas} layout="vertical" margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
                       <XAxis type="number" tickFormatter={(val) => `R$ ${(val/1000000).toFixed(1)}M`} tick={{fill: '#64748B', fontSize: 10}} />
                       <YAxis type="category" dataKey="name" interval={0} width={130} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 10}} axisLine={false} tickLine={false} />
-                      <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} contentStyle={{ border: 'none', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
+                      <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} />
                       <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '11px', fontWeight: 'bold' }} />
-                      {areasPresentes.map((area, idx) => (
-                        <Bar key={`rec-${area}`} dataKey={area} name={area} stackId="a" fill={AREA_COLORS[area] || COLORS[idx % COLORS.length]} />
-                      ))}
+                      {areasPresentes.map((area, idx) => <Bar key={`rec-${area}`} dataKey={area} name={area} stackId="a" fill={AREA_COLORS[area] || COLORS[idx % COLORS.length]} />)}
                     </BarChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer></div>
                 </div>
-              </div>
 
-              <div className="h-full flex flex-col">
-                <h4 className="text-xs font-bold text-gray-500 uppercase text-center mb-2">Fatiamento de Despesas</h4>
-                <div className="flex-1">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-full flex flex-col">
+                  <div className="bg-rose-50 border-b border-rose-200 p-2 sticky top-0 z-10"><h4 className="text-xs font-bold text-center text-rose-800 uppercase">Fatiamento de Despesas Alocadas</h4></div>
+                  <div className="flex-1 mt-2"><ResponsiveContainer width="100%" height="100%">
                     <BarChart data={dataMatriz.despesas} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
                       <XAxis type="number" tickFormatter={(val) => `R$ ${(val/1000000).toFixed(1)}M`} tick={{fill: '#64748B', fontSize: 10}} />
                       <YAxis type="category" dataKey="name" interval={0} width={130} tick={{fill: '#0F172A', fontWeight: 600, fontSize: 10}} axisLine={false} tickLine={false} />
-                      <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} contentStyle={{ border: 'none', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
-                      {areasPresentes.map((area, idx) => (
-                        <Bar key={`desp-${area}`} dataKey={area} name={area} stackId="b" fill={AREA_COLORS[area] || COLORS[idx % COLORS.length]} />
-                      ))}
+                      <RechartsTooltip formatter={(val) => formatCurrency(val)} cursor={{fill: '#F8FAFC'}} />
+                      {areasPresentes.map((area, idx) => <Bar key={`desp-${area}`} dataKey={area} name={area} stackId="b" fill={AREA_COLORS[area] || COLORS[idx % COLORS.length]} />)}
                     </BarChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer></div>
                 </div>
-              </div>
 
+              </div>
             </div>
           </div>
+          <InsightBox icon={Layers} title="Comentário Estratégico sobre Fatiamento" color="blue">
+            Unidades resilientes apresentam forte diversificação. Avalie nas barras coloridas acima se as unidades mais robustas dependem exclusivamente de uma única Área de Negócio (risco operacional de alta concentração de receitas) ou se possuem os seus ganhos e riscos bem pulverizados em diferentes verticais.
+          </InsightBox>
         </div>
 
-        {/* ÁREAS DE ATUAÇÃO E PROJEÇÃO ANUAL DA SELEÇÃO */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="border border-gray-200 p-6 bg-white shadow-sm">
-            <h3 className="text-sm font-bold uppercase text-gray-900 mb-6">Áreas de Atuação Vinculadas</h3>
-            <div style={{ height: '450px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={dataArea} dataKey="receitas" nameKey="name" cx="50%" cy="50%" innerRadius={70} outerRadius={120} paddingAngle={3}
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    labelLine={{ stroke: '#94A3B8', strokeWidth: 1 }}
-                    style={{ fontSize: '11px', fontWeight: 600, fill: '#334155' }}
-                  >
-                    {dataArea.map((entry, index) => <Cell key={`cell-${index}`} fill={AREA_COLORS[entry.name] || COLORS[index % COLORS.length]} />)}
-                  </Pie>
-                  <RechartsTooltip formatter={(val) => formatCurrency(val)} />
-                  <Legend layout="vertical" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontWeight: 600, fontSize: '11px', color: '#0F172A', paddingTop: '20px' }} />
-                </PieChart>
-              </ResponsiveContainer>
+          <div className="border border-gray-200 p-6 bg-white shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="text-sm font-bold uppercase text-gray-900 mb-6">Dependência por Área de Atuação Vinculada</h3>
+              <div style={{ height: '350px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={dataArea} dataKey="receitas" nameKey="name" cx="50%" cy="50%" innerRadius={70} outerRadius={120} paddingAngle={3} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} labelLine={{ stroke: '#94A3B8', strokeWidth: 1 }} style={{ fontSize: '11px', fontWeight: 600, fill: '#334155' }}>
+                      {dataArea.map((entry, index) => <Cell key={`cell-${index}`} fill={AREA_COLORS[entry.name] || COLORS[index % COLORS.length]} />)}
+                    </Pie>
+                    <RechartsTooltip formatter={(val) => formatCurrency(val)} />
+                    <Legend layout="vertical" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontWeight: 600, fontSize: '11px', color: '#0F172A', paddingTop: '20px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
+            <InsightBox icon={Target} title="Macro Concentração" color="blue">
+              A representação percentual reflete a dependência de mercado. Uma fatia esmagadora exige planos de contingência caso esse mercado sofra oscilações.
+            </InsightBox>
           </div>
 
           <div className="border border-gray-200 p-6 bg-white shadow-sm">
-            <h3 className="text-sm font-bold uppercase text-gray-900 mb-6">
-              {!hasFilters ? 'Projeção Anual por Diretor (R.O 2026)' : `Projeção Anual da Seleção (R.O 2026)`}
-            </h3>
-            <div className="overflow-y-auto overflow-x-hidden pr-2" style={{ height: '450px' }}>
-              <div style={{ minHeight: '100%', height: Math.max(450, (!hasFilters ? dataDiretor : dataUnidade).length * 45) }}>
+            <div className="mb-4 border-b border-gray-100 pb-2">
+              <h3 className="text-sm font-bold uppercase text-gray-900 mb-1">{!hasFilters ? 'Projeção Anual por Diretor (R.O)' : `Projeção Anual da Seleção (R.O)`}</h3>
+              <p className="text-xs text-gray-500">Distribuição estática do lucro prometido pelas lideranças.</p>
+            </div>
+            <div className="overflow-y-auto overflow-x-hidden pr-2" style={{ height: '350px' }}>
+              <div style={{ minHeight: '100%', height: Math.max(350, (!hasFilters ? dataDiretor : dataUnidade).length * 45) }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={!hasFilters ? dataDiretor : dataUnidade} layout="vertical" margin={{ top: 5, right: 60, left: 10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
@@ -774,47 +952,52 @@ export default function StrategicDashboard() {
           </div>
         </div>
 
-        {/* TABELA DE UNIDADES VINCULADAS */}
+        {/* TABELA DE UNIDADES VINCULADAS COM INVESTIMENTOS */}
         <div className="border border-gray-200 p-6 bg-white shadow-sm mb-10">
-           <h3 className="text-sm font-bold uppercase text-gray-900 mb-6 flex justify-between items-center">
-             Auditoria de Unidades {hasFilters ? `da Seleção` : ''}
-             <MapPin size={18} className="text-gray-400" />
-           </h3>
+           <div className="mb-4 border-b border-gray-100 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+             <div>
+               <h3 className="text-sm font-bold uppercase text-gray-900 mb-1">Auditoria Analítica Detalhada (Por Unidade)</h3>
+               <p className="text-xs text-gray-500">Listagem de todas as unidades mapeadas nos critérios dos filtros ativos.</p>
+             </div>
+             <MapPin size={18} className="text-gray-400 hidden md:block" />
+           </div>
+           
            <div className="overflow-x-auto max-h-96 overflow-y-auto">
              <table className="w-full text-left text-sm relative">
                <thead className="sticky top-0 bg-white shadow-sm z-10">
                  <tr className="border-b-2 border-gray-900">
                    <th className="py-3 px-2 font-bold text-gray-900">Unidade</th>
                    <th className="py-3 px-2 font-bold text-gray-900 text-right">R.O 2026 (Ano)</th>
-                   <th className="py-3 px-2 font-bold text-gray-900 text-right">Meta (Bimestre)</th>
                    <th className="py-3 px-2 font-bold text-gray-900 text-right">Realizado (Jan/Fev)</th>
-                   <th className="py-3 px-2 font-bold text-gray-900 text-center">Status de Ritmo</th>
+                   <th className="py-3 px-2 font-bold text-gray-900 text-center border-l border-gray-200">Status de Ritmo</th>
+                   <th className="py-3 px-2 font-bold text-indigo-700 text-right bg-indigo-50 border-l border-gray-200">Total Investido</th>
                  </tr>
                </thead>
                <tbody>
                  {dataUnidade.map((item, idx) => {
                    const isAcelerado = item.roRealizado >= item.metaJanFev && item.roRealizado > 0;
                    const isCritico = item.roRealizado < 0 && item.metaJanFev >= 0;
+                   
+                   let invUnidade = 0;
+                   filteredInvData.filter(i => i.unidade === item.name).forEach(i => invUnidade += i.realizado);
 
                    return (
                      <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                        <td className="py-3 px-2 font-semibold text-gray-800">{item.name}</td>
                        <td className="py-3 px-2 text-right text-gray-600">{formatCurrency(item.ro2026)}</td>
-                       <td className="py-3 px-2 text-right text-gray-400">{formatCurrency(item.metaJanFev)}</td>
-                       <td className={`py-3 px-2 text-right font-bold ${item.roRealizado >= 0 ? 'text-gray-900' : 'text-rose-600'}`}>
-                         {formatCurrency(item.roRealizado)}
-                       </td>
-                       <td className="py-3 px-2 text-center">
+                       <td className={`py-3 px-2 text-right font-bold ${item.roRealizado >= 0 ? 'text-gray-900' : 'text-rose-600'}`}>{formatCurrency(item.roRealizado)}</td>
+                       <td className="py-3 px-2 text-center border-l border-gray-100">
                          {item.metaJanFev <= 0 && item.roRealizado <= 0 ? (
-                           <span className="px-2 py-1 text-xs font-bold rounded bg-gray-100 text-gray-600">Déficit Estrutural</span>
+                           <span className="px-2 py-1 text-[10px] font-bold rounded bg-gray-100 text-gray-600">Déficit Estrutural</span>
                          ) : isAcelerado ? (
-                           <span className="px-2 py-1 text-xs font-bold rounded bg-emerald-100 text-emerald-800">Acima da Meta</span>
+                           <span className="px-2 py-1 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">Acima da Meta</span>
                          ) : isCritico ? (
-                           <span className="px-2 py-1 text-xs font-bold rounded bg-rose-100 text-rose-800">Alerta</span>
+                           <span className="px-2 py-1 text-[10px] font-bold rounded bg-rose-100 text-rose-800">Alerta</span>
                          ) : (
-                           <span className="px-2 py-1 text-xs font-bold rounded bg-rose-100 text-rose-800">Abaixo da Meta</span>
+                           <span className="px-2 py-1 text-[10px] font-bold rounded bg-rose-100 text-rose-800">Abaixo da Meta</span>
                          )}
                        </td>
+                       <td className="py-3 px-2 text-right text-indigo-600 font-bold bg-indigo-50/30 border-l border-gray-100">{formatCurrency(invUnidade)}</td>
                      </tr>
                    );
                  })}
@@ -824,30 +1007,30 @@ export default function StrategicDashboard() {
 
            {/* LEGENDA DIDÁTICA DA TABELA */}
            <div className="mt-5 pt-4 border-t border-gray-100 bg-gray-50 p-4 rounded-b">
-             <h4 className="text-xs font-bold uppercase text-gray-800 mb-3">Guia de Status de Ritmo:</h4>
+             <h4 className="text-xs font-bold uppercase text-gray-800 mb-3">Guia Metodológico de Status (Ritmo):</h4>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-gray-700">
                <div className="flex items-start gap-2">
                  <span className="w-3 h-3 mt-0.5 rounded-full bg-emerald-400 shrink-0"></span> 
-                 <p><strong>Acima da Meta:</strong> A unidade gerou mais resultado do que o esperado para os dois primeiros meses.</p>
+                 <p><strong>Acima da Meta:</strong> A unidade gerou mais lucro que a proporção exigida no período.</p>
                </div>
                <div className="flex items-start gap-2">
                  <span className="w-3 h-3 mt-0.5 rounded-full bg-rose-400 shrink-0"></span> 
-                 <p><strong>Abaixo da Meta:</strong> O R.O é positivo, mas o volume está lento. Há risco de não entregar o valor total no final do ano.</p>
+                 <p><strong>Abaixo da Meta:</strong> O resultado é positivo, mas numa margem tão curta que acarreta risco sistémico.</p>
                </div>
                <div className="flex items-start gap-2">
                  <span className="w-3 h-3 mt-0.5 rounded-full bg-rose-600 shrink-0"></span> 
-                 <p><strong>Alerta:</strong> A unidade prometeu lucro no ano, mas já está dando prejuízo no primeiro bimestre.</p>
+                 <p><strong>Alerta Crítico:</strong> Prometeu-se lucro no ano, mas o pólo já se encontra a gerar prejuízo.</p>
                </div>
                <div className="flex items-start gap-2">
                  <span className="w-3 h-3 mt-0.5 rounded-full bg-gray-400 shrink-0"></span> 
-                 <p><strong>Déficit Estrutural:</strong> O orçamento anual aprovado já previa prejuízo. O foco de análise aqui deve ser de contenção de danos.</p>
+                 <p><strong>Déficit Estrutural:</strong> Unidade subsidiada pela rede, cujo orçamento aprovado já prevê perdas.</p>
                </div>
              </div>
            </div>
         </div>
 
-        <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest border-t border-gray-200 pt-8">
-          Relatório Estratégico Comparativo • Geração Automática
+        <div className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-200 pt-8 pb-4">
+          Módulo de Business Intelligence C-Level • Orçamento vs Execução e CAPEX
         </div>
 
       </div>
